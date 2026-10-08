@@ -1,0 +1,10 @@
+SELECT strat_val, sum(Older_Adult), sum(Physical_Disability), sum(IDD), sum(Brain_Injury), sum(Total)  
+FROM measures.q4_output 
+WHERE YEAR = 2025 AND SEMI_PERIOD = 1 GROUP BY 1;  -- pass
+SELECT distinct STRAT_VAL FROM measures.q4_output ;  -- PASS ONLY LISTED VALUES.
+
+/*ALTER TABLE `measures`.`q4_output` 
+CHANGE COLUMN `Older Adult` `Older_Adult` INT NULL DEFAULT NULL ,
+CHANGE COLUMN `Physical Disability` `Physical_Disability` INT NULL DEFAULT NULL ,
+CHANGE COLUMN `I/DD` `IDD` INT NULL DEFAULT NULL ,
+CHANGE COLUMN `Brain Injury` `Brain_Injury` INT NULL DEFAULT '0' ;
