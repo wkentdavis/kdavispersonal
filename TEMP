@@ -11,3 +11,33 @@ INSERT INTO `ncmfp_prod`.`SAR_GOALS` ( `REPORT_ID`, `SECTION`, `MSR`, `CALYEAR`,
      ('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'S2', '2026-07-01', '2026-12-31', 'ALL', '89.5', 'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
      ( 'SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Y', '2026-01-01', '2026-12-31', 'ALL', '179', 'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09');
     
+-- from copilot for the quarters:
+
+Based on the values in TEMPTARGETSQTLY.SQL, I created 20 quarterly rows (Q1-Q4) using calendar quarter start/end dates and set each quarterly TARGET to 50% of the corresponding semi-annual value.
+
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q1', '2026-01-01', '2026-03-31', 'OA',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q1', '2026-01-01', '2026-03-31', 'IDD', '19',    'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q1', '2026-01-01', '2026-03-31', 'PD',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q1', '2026-01-01', '2026-03-31', 'TBI', '0.75',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q1', '2026-01-01', '2026-03-31', 'ALL', '44.75', 'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q2', '2026-04-01', '2026-06-30', 'OA',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q2', '2026-04-01', '2026-06-30', 'IDD', '19',    'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q2', '2026-04-01', '2026-06-30', 'PD',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q2', '2026-04-01', '2026-06-30', 'TBI', '0.75',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q2', '2026-04-01', '2026-06-30', 'ALL', '44.75', 'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q3', '2026-07-01', '2026-09-30', 'OA',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q3', '2026-07-01', '2026-09-30', 'IDD', '19',    'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q3', '2026-07-01', '2026-09-30', 'PD',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q3', '2026-07-01', '2026-09-30', 'TBI', '0.75',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q3', '2026-07-01', '2026-09-30', 'ALL', '44.75', 'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q4', '2026-10-01', '2026-12-31', 'OA',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q4', '2026-10-01', '2026-12-31', 'IDD', '19',    'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q4', '2026-10-01', '2026-12-31', 'PD',  '12.5',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q4', '2026-10-01', '2026-12-31', 'TBI', '0.75',  'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09'),
+('SAR20261', 'SAR02', 'TRANSCNT', '2026', 'Q4', '2026-10-01', '2026-12-31', 'ALL', '44.75', 'EMAIL FROM STEVE 9-9-2026', '2026-10-09', 'kdavis', '2026-10-09')
+
+
+Source targets used: OA=25, IDD=38, PD=25, TBI=1.5, ALL=89.5; quarterly targets are 50% of those values.
