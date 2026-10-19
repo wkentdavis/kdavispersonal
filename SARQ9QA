@@ -1,0 +1,17 @@
+-- Check age groups, length of stay valid values. totals match
+SELECT * FROM measures.q9_output  WHERE YEAR = 2025 AND SEMI_PERIOD = 1 ;  -- 6 months, 4 age groups plus totals. Null rows present (see LT June) PASS
+SELECT MONTH_FIRST_DATE,Term_of_Stay, SUM(Ages1864), SUM(Ages6574), SUM(Ages7584), SUM(Ages85PLUS), SUM(Total) 
+FROM measures.q9_output  WHERE YEAR = 2025 AND SEMI_PERIOD = 1  GROUP BY 1,2 ORDER BY 1,2; -- Check sums match across and within the agegroups 
+-- check the assignment of short, medium long
+-- 1) There are no LONG stays.
+-- 2) Check Jan 2026, expect 4 short and 3 medium
+SELECT * FROM data_mart.mfp_tracker_critical_incidents 
+where CRITICAL_INCIDENT_DATE between '2025-01-01' AND '2025-01-31' and DAYS_IN_HOSPITAL is not null
+ and EXTRACT_DATE = '2026-08-01'; -- Expect 7, see 7 4 short, 3 medium; ages are age when transitioned all pass.
+
+-- CHECK SAR_MART
+SELECT SUM(TOTAL) FROM measures.q9_output  WHERE YEAR = 2025 AND SEMI_PERIOD = 1 AND Term_of_Stay = "Total";  -- 27 total for 2025 S1
+SELECT * FROM measures.sar_mart WHERE SECTION = 'SAR09' and CALYEAR = 2025 and TIMEFRAME = 'S1';  
+SELECT sum(val) FROM measures.sar_mart WHERE SECTION = 'SAR09' and CALYEAR = 2025 and TIMEFRAME = 'S1' AND population != 'ALLAGES' AND STRATVAL != 'Total';  -- 27
+SELECT sum(val) FROM measures.sar_mart WHERE SECTION = 'SAR09' and CALYEAR = 2025 and TIMEFRAME = 'S1' AND population = 'ALLAGES' AND STRATVAL = 'Total'; -- 27
+SELECT POPULATION, STRATVAL, SUM(val) FROM measures.sar_mart WHERE SECTION = 'SAR09' and CALYEAR = 2025 and TIMEFRAME = 'S1' GROUP BY POPULATION, STRATVAL; -- 5
