@@ -8,3 +8,12 @@ CHANGE COLUMN `Older Adult` `Older_Adult` INT NULL DEFAULT NULL ,
 CHANGE COLUMN `Physical Disability` `Physical_Disability` INT NULL DEFAULT NULL ,
 CHANGE COLUMN `I/DD` `IDD` INT NULL DEFAULT NULL ,
 CHANGE COLUMN `Brain Injury` `Brain_Injury` INT NULL DEFAULT '0' ;
+
+-- QA SAR 4 ON 10/18/2026
+
+SELECT strat_val, sum(Older_Adult), sum(Physical_Disability), sum(I_DD), sum(Brain_Injury), sum(Total)  
+FROM measures.q4_output 
+WHERE YEAR = 2025 AND SEMI_PERIOD = 1 GROUP BY 1;  -- pass
+SELECT * FROM measures.sar_mart WHERE SECTION = 'SAR04' and REPORT_ID = 'SAR20251' AND EXTRACTDT = '2026-08-01';
+SELECT EXTRACTDT, STRAT,STRATVAL, sum(num), sum(denom), sum(val) FROM measures.sar_mart WHERE SECTION = 'SAR04' and REPORT_ID = 'SAR20251' AND EXTRACTDT = '2026-08-01' 
+AND STRATVAL !='Total' and POPULATION != 'ALL' GROUP BY 1,2,3 ;  -- 21, 16, 31, AND 0 APT IN QUAL RES.  PASS MATCHES OUTPUT AND PDF.
