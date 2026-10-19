@@ -1,1 +1,8 @@
 
+-- QA on 10/19. Expectation: Ally's content matches my prep code, and she gets 1 line result.
+SELECT * FROM measures.q7_output  WHERE YEAR = 2025 AND SEMI_PERIOD = 1 ; 
+SELECT sum(Older_Adult), sum(Physical_Disability), sum(IDD), sum(Brain_Injury), sum(Total)  
+FROM measures.q7_output  WHERE YEAR = 2025 AND SEMI_PERIOD = 1 ;  -- 3/5/10/0/18   Still matches PDF
+-- and I guess if we need to put this in one line:
+SELECT '2025 Period 1' as Pop, sum(Older_Adult) as OlderAdults, sum(Physical_Disability) as PD, sum(IDD) as 'I/DD', sum(Brain_Injury) as 'Brain Injury', sum(Total) as Total 
+FROM measures.q7_output  WHERE YEAR = 2025 AND SEMI_PERIOD = 1 ;  -- 3/5/10/0/18   Still matches PDF
