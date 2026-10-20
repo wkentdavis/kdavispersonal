@@ -1,0 +1,206 @@
+WITH periods AS (
+    SELECT
+        Calendar_Year AS YEAR,
+        Semi_Annual_Period AS PERIOD,
+        MIN(Month_First_Date) AS PERIOD_FIRST_DATE,
+        MAX(Month_Last_Date) AS PERIOD_LAST_DATE
+    FROM reference.calendar 
+    GROUP BY Calendar_Year, Semi_Annual_Period
+),
+quarters AS (
+    SELECT
+        Calendar_Year AS YEAR,
+        Calendar_Quarter AS QUARTER,
+        MIN(Month_First_Date) AS QUARTER_FIRST_DATE,
+        MAX(Month_Last_Date) AS QUARTER_LAST_DATE
+    FROM reference.calendar c
+    GROUP BY Calendar_Year, Calendar_Quarter
+),
+cal AS (
+	SELECT c.*, q.QUARTER_FIRST_DATE, q.QUARTER_LAST_DATE, p.PERIOD_FIRST_DATE, p.PERIOD_LAST_DATE FROM reference.calendar c
+    JOIN quarters q ON c.Calendar_Year = q.YEAR And c.Calendar_Quarter = q.QUARTER 
+    JOIN periods p ON c.Calendar_Year = p.YEAR AND c.Semi_Annual_Period = p.PERIOD
+    WHERE Month_First_Date BETWEEN '2023-01-01' AND '2026-08-02' AND DAY(Calendar_Date) = 1
+),
+base AS (
+    SELECT
+        `DATE_OF_TRANSITION`,
+        `MEDICAID_ID`,
+        CASE
+            WHEN `POPULATION_CATEGORY` = 'I/DD' THEN 'I_DD'
+            WHEN COALESCE(`AGE_ON_APPROVAL`, 0) >= 65 THEN 'Older_Adult'
+            WHEN COALESCE(`AGE_ON_APPROVAL`, 0) > 0 THEN 'Physical_Disability'
+            ELSE COALESCE(NULLIF(`POPULATION_CATEGORY`, ''), 'Physical_Disability')
+        END AS Population_Category_Upon_Approval
+    FROM measures.master_member_month
+    WHERE `DATE_OF_TRANSITION` IS NOT NULL AND EXTRACT_DATE = @extract_dt
+),
+q_counts AS (
+    SELECT
+		Month_First_Date,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Older_Adult' THEN 1 ELSE 0 END) AS `Older_Adult`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Physical_Disability' THEN 1 ELSE 0 END) AS `Physical_Disability`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'I_DD' THEN 1 ELSE 0 END) AS `I_DD`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Brain_Injury' THEN 1 ELSE 0 END) AS `Brain_Injury`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Older_Adult' THEN 1 ELSE 0 END)
+        + SUM(CASE WHEN Population_Category_Upon_Approval = 'Physical_Disability' THEN 1 ELSE 0 END)
+        + SUM(CASE WHEN Population_Category_Upon_Approval = 'I_DD' THEN 1 ELSE 0 END)
+        + SUM(CASE WHEN Population_Category_Upon_Approval = 'Brain_Injury' THEN 1 ELSE 0 END) AS Total
+    FROM base
+    JOIN cal ON base.`DATE_OF_TRANSITION` BETWEEN cal.QUARTER_FIRST_DATE AND cal.Month_Last_Date
+    GROUP BY cal.Month_First_Date
+),
+p_counts AS (
+    SELECT
+		Month_First_Date,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Older_Adult' THEN 1 ELSE 0 END) AS `Older_Adult`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Physical_Disability' THEN 1 ELSE 0 END) AS `Physical_Disability`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'I_DD' THEN 1 ELSE 0 END) AS `I_DD`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Brain_Injury' THEN 1 ELSE 0 END) AS `Brain_Injury`,
+        SUM(CASE WHEN Population_Category_Upon_Approval = 'Older_Adult' THEN 1 ELSE 0 END)
+        + SUM(CASE WHEN Population_Category_Upon_Approval = 'Physical_Disability' THEN 1 ELSE 0 END)
+        + SUM(CASE WHEN Population_Category_Upon_Approval = 'I_DD' THEN 1 ELSE 0 END)
+        + SUM(CASE WHEN Population_Category_Upon_Approval = 'Brain_Injury' THEN 1 ELSE 0 END) AS Total
+    FROM base
+    JOIN cal ON base.`DATE_OF_TRANSITION` BETWEEN cal.PERIOD_FIRST_DATE AND cal.Month_Last_Date
+    GROUP BY cal.Month_First_Date
+),
+q_goals AS (
+	SELECT p.YEAR, p.QUARTER, POPULATION, TARGET 
+	FROM historical.sar_goals g -- todo
+    JOIN quarters p
+    ON g.CALYEAR = p.YEAR
+      AND g.STARTDT = p.QUARTER_FIRST_DATE
+      AND g.ENDDT = p.QUARTER_LAST_DATE
+),
+q_targets AS (
+    SELECT
+		YEAR,
+        QUARTER,
+        SUM(CASE WHEN POPULATION = 'OA' THEN TARGET ELSE 0 END) AS `Older_Adult`,
+        SUM(CASE WHEN POPULATION = 'PD' THEN TARGET ELSE 0 END) AS `Physical_Disability`,
+        SUM(CASE WHEN POPULATION = 'IDD' THEN TARGET ELSE 0 END) AS `I_DD`,
+        SUM(CASE WHEN POPULATION = 'TBI' THEN TARGET ELSE 0 END) AS `Brain_Injury`,
+        SUM(CASE WHEN POPULATION = 'ALL' THEN TARGET ELSE 0 END) AS `Total`
+	FROM q_goals g
+    GROUP BY g.YEAR, g.QUARTER
+),
+p_goals AS (
+	SELECT p.YEAR, p.PERIOD, POPULATION, TARGET 
+	FROM historical.sar_goals g -- todo
+    JOIN periods p
+    ON g.CALYEAR = p.YEAR
+      AND g.STARTDT = p.PERIOD_FIRST_DATE
+      AND g.ENDDT = p.PERIOD_LAST_DATE
+),
+p_targets AS (
+    SELECT
+		YEAR,
+		PERIOD,
+        SUM(CASE WHEN POPULATION = 'OA' THEN TARGET ELSE 0 END) AS `Older_Adult`,
+        SUM(CASE WHEN POPULATION = 'PD' THEN TARGET ELSE 0 END) AS `Physical_Disability`,
+        SUM(CASE WHEN POPULATION = 'IDD' THEN TARGET ELSE 0 END) AS `I_DD`,
+        SUM(CASE WHEN POPULATION = 'TBI' THEN TARGET ELSE 0 END) AS `Brain_Injury`,
+        SUM(CASE WHEN POPULATION = 'ALL' THEN TARGET ELSE 0 END) AS `Total`
+	FROM p_goals
+    GROUP BY YEAR, PERIOD
+),
+pct_row AS (
+    SELECT
+		c.Month_First_Date,
+        CASE WHEN p2.`Older_Adult` = 0 THEN 0 ELSE ROUND(t.`Older_Adult` / p2.`Older_Adult`, 4) END AS `Older_Adult`,
+        CASE WHEN p2.`Physical_Disability` = 0 THEN 0 ELSE ROUND(t.`Physical_Disability` / p2.`Physical_Disability`, 4) END AS `Physical_Disability`,
+        CASE WHEN p2.`I_DD` = 0 THEN 0 ELSE ROUND(t.`I_DD` / p2.`I_DD`, 4) END AS `I_DD`,
+        CASE WHEN p2.`Brain_Injury` = 0 THEN 0 ELSE ROUND(t.`Brain_Injury` / p2.`Brain_Injury`, 4) END AS `Brain_Injury`,
+        CASE WHEN p2.Total = 0 THEN 0 ELSE ROUND(t.Total / p2.Total, 4) END AS Total
+    FROM p_counts t
+    JOIN cal c ON t.Month_First_Date = c.Month_First_Date
+    JOIN p_targets p2 ON p2.YEAR = c.Calendar_Year AND p2.PERIOD = c.Semi_Annual_Period
+)
+SELECT
+	cal.Calendar_Year,
+    TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', '')),
+    cal.Calendar_Quarter,
+	q_counts.Month_First_Date,
+	cal.Month_Last_Date,
+	CONCAT_WS(' ', cal.Calendar_Year, cal.Calendar_Quarter, 'Transitions') AS Category,
+    TRUE,
+    `Older_Adult`,
+    `Physical_Disability`,
+    `I_DD`,
+    `Brain_Injury`,
+    Total
+FROM q_counts
+JOIN cal ON cal.Month_First_Date = q_counts.Month_First_Date
+
+UNION ALL
+
+SELECT
+	cal.Calendar_Year,
+    TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', '')),
+    CONCAT('S', TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', ''))) AS TIMEFRAME,
+	p_counts.Month_First_Date,
+	cal.Month_Last_Date,
+	CONCAT_WS(' ', cal.Calendar_Year, cal.Semi_Annual_Period, 'Transitions') AS Category,
+    TRUE,
+    `Older_Adult`,
+    `Physical_Disability`,
+    `I_DD`,
+    `Brain_Injury`,
+    Total
+FROM p_counts
+JOIN cal ON cal.Month_First_Date = p_counts.Month_First_Date
+
+UNION ALL
+
+SELECT 
+	cal.Calendar_Year,
+    TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', '')),
+    cal.Calendar_Quarter,
+	cal.Month_First_Date,
+	cal.Month_Last_Date,
+	CONCAT_WS(' ', cal.Calendar_Year, cal.Calendar_Quarter, 'Transition Targets') AS Category,
+    FALSE,
+    `Older_Adult`,
+    `Physical_Disability`,
+    `I_DD`,
+    `Brain_Injury`,
+    Total
+FROM q_targets
+RIGHT JOIN cal ON cal.Calendar_Year = q_targets.YEAR AND cal.Calendar_Quarter = q_targets.QUARTER
+
+UNION ALL
+
+SELECT
+	cal.Calendar_Year,
+    TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', '')),
+    CONCAT('S', TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', ''))) AS TIMEFRAME,
+	cal.Month_First_Date,
+	cal.Month_Last_Date,
+	CONCAT_WS(' ', cal.Calendar_Year, cal.Semi_Annual_Period, 'Total Transition Targets') AS Category,
+    FALSE,
+    `Older_Adult`,
+    `Physical_Disability`,
+    `I_DD`,
+    `Brain_Injury`,
+    Total
+FROM p_targets
+RIGHT JOIN cal ON cal.Calendar_Year = p_targets.YEAR AND cal.Semi_Annual_Period = p_targets.PERIOD
+
+UNION ALL
+
+SELECT
+	cal.Calendar_Year,
+    TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', '')),
+    CONCAT('S', TRIM(REPLACE(cal.Semi_Annual_Period, 'Period', ''))) AS TIMEFRAME,
+	cal.Month_First_Date,
+	cal.Month_Last_Date,
+	CONCAT_WS(' ', '% of', cal.Calendar_Year, cal.Semi_Annual_Period, 'Targets Achieved') AS Category,
+    TRUE,
+    `Older_Adult`,
+    `Physical_Disability`,
+    `I_DD`,
+    `Brain_Injury`,
+	`Total`
+FROM pct_row
+RIGHT JOIN cal ON cal.Month_First_Date = pct_row.Month_First_Date;
